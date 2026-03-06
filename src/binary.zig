@@ -109,7 +109,7 @@ pub const BinaryMessage = struct {
 /// helper function to build a valid encoded frame into `buffer`. returns the slice written.
 /// layout in little-endian:
 /// [magic:u16][version:u8][flags:u8][timestamp:i64][key_len:u16][payload_len:u32][key:[key_len]u8][payload:[payload_len]u8][crc:u32]
-fn buildFrame(
+pub fn buildFrame(
     buffer: []u8,
     version: u8,
     flags: u8,
