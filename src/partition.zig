@@ -3,6 +3,7 @@ const testing = std.testing;
 const binary = @import("binary.zig");
 
 const Segment = @import("segment.zig").Segment;
+const TopicRegistry = @import("registry.zig").TopicRegistry;
 
 /// A partition is a collection of segments that share the same path prefix.
 /// Note: we leave out recovery from here and instead pass in existing segments on creation.
@@ -72,7 +73,7 @@ test "append: create first segment and read/write data" {
     defer std.fs.cwd().deleteTree("partition_append") catch {};
 
     var partition = try Partition.init(testing.allocator, "partition_append", &[_]Segment{});
-    defer partition.deinit();
+    // note: we don't deinit here cause our topic registry handles that
 
     try testing.expectEqualStrings("partition_append", partition.prefix);
     try testing.expectEqual(@as(usize, 0), partition.segments.items.len);
@@ -108,6 +109,13 @@ test "append: create first segment and read/write data" {
     const fourth = try partition.readAt(3);
     defer testing.allocator.free(fourth);
     try testing.expectEqualStrings(frame4, fourth);
+
+    var topic_registry = TopicRegistry.init(testing.allocator);
+    defer topic_registry.deinit();
+
+    try topic_registry.put("partition", 0, partition);
+    const got = topic_registry.get("partition").?.get(0).?;
+    try testing.expectEqual(partition, got);
 }
 
 test "readAt: return OutOfBounds when offset exceeds data" {
