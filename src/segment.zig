@@ -1,7 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 
-const binary = @import("binary.zig");
+const binary = @import("binary/produce.zig");
 
 pub const Segment = struct {
     const Self = @This();

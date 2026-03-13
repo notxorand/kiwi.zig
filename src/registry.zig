@@ -1,6 +1,7 @@
 const std = @import("std");
 const AutoHashMap = std.AutoHashMap;
 const StringHashMap = std.StringHashMap;
+
 const Partition = @import("partition.zig").Partition;
 
 pub const TopicRegistry = struct {
