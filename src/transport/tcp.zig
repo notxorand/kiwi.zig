@@ -7,24 +7,22 @@ const binary_produce = @import("../binary/produce.zig");
 const ConsumeHandler = @import("../handler/consume.zig").ConsumeHandler;
 const ProduceHandler = @import("../handler/produce.zig").ProduceHandler;
 
-const Channel = @import("channel.zig").Channel(TcpTransport);
-
 pub const TcpTransport = struct {
     const Self = @This();
 
     address: zio.net.IpAddress,
-    consume_handler: ConsumeHandler(Self),
-    produce_handler: ProduceHandler(Self),
+    consume_handler: ConsumeHandler,
+    produce_handler: ProduceHandler,
 
     pub fn init(address: []const u8, port: u16) !Self {
         return Self{
             .address = try zio.net.IpAddress.parseIp4(address, port),
-            .consume_handler = ConsumeHandler(Self){},
-            .produce_handler = ProduceHandler(Self){},
+            .consume_handler = ConsumeHandler{},
+            .produce_handler = ProduceHandler{},
         };
     }
 
-    pub fn listen(self: *Self, group: *zio.Group, channel: *Channel) !void {
+    pub fn listen(self: *Self, group: *zio.Group) !void {
         const server = try self.address.listen(.{});
         defer server.close();
         std.log.info("TCP transport server listening on {f}", .{server.socket.address});
@@ -33,14 +31,11 @@ pub const TcpTransport = struct {
             const stream = try server.accept();
             errdefer stream.close();
 
-            try group.spawn(handle, .{ self, channel, stream });
+            try group.spawn(handle, .{ self, stream });
         }
     }
 
-    fn handle(self: *Self, channel: *Channel, stream: zio.net.Stream) !void {
-        self.consume_handler.channel = channel;
-        self.produce_handler.channel = channel;
-
+    fn handle(self: *Self, stream: zio.net.Stream) !void {
         defer stream.close();
         const socket_address = stream.socket.address;
 
