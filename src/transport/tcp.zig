@@ -6,6 +6,7 @@ const binary_consume = @import("../binary/consume.zig");
 const binary_produce = @import("../binary/produce.zig");
 const ConsumeHandler = @import("../handler/consume.zig").ConsumeHandler;
 const ProduceHandler = @import("../handler/produce.zig").ProduceHandler;
+const TopicRegistry = @import("../registry.zig").TopicRegistry;
 
 pub const TcpTransport = struct {
     const Self = @This();
@@ -14,10 +15,10 @@ pub const TcpTransport = struct {
     consume_handler: ConsumeHandler,
     produce_handler: ProduceHandler,
 
-    pub fn init(address: []const u8, port: u16) !Self {
+    pub fn init(address: []const u8, port: u16, registry: *TopicRegistry) !Self {
         return Self{
             .address = try zio.net.IpAddress.parseIp4(address, port),
-            .consume_handler = ConsumeHandler{},
+            .consume_handler = ConsumeHandler{ .registry = registry },
             .produce_handler = ProduceHandler{},
         };
     }
@@ -83,8 +84,3 @@ pub const TcpTransport = struct {
         std.log.info("Client disconnected: {f}", .{socket_address});
     }
 };
-
-// Possible writebacks:
-// ERROR: <issue>
-// ACK: [[offset_range], ack_level]
-// CLOSE: <reason>

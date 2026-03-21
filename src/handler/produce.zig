@@ -1,7 +1,5 @@
 const std = @import("std");
 
-const ChannelImpl = @import("../transport/channel.zig").Channel;
-
 pub const ProduceHandler = struct {
     const Self = @This();
 

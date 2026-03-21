@@ -7,7 +7,6 @@ const binary_produce = @import("binary/produce.zig");
 const partition = @import("partition.zig");
 const registry = @import("registry.zig");
 const segment = @import("segment.zig");
-const channel = @import("transport/channel.zig");
 const tcp = @import("transport/tcp.zig");
 
 pub fn main() !void {
@@ -18,10 +17,14 @@ pub fn main() !void {
     const rt = try zio.Runtime.init(allocator, .{});
     defer rt.deinit();
 
-    var transport_channel = try channel.Channel(tcp.TcpTransport).init(allocator, try tcp.TcpTransport.init("0.0.0.0", 2049));
-    defer transport_channel.deinit();
+    var group: zio.Group = .init;
+    defer group.cancel();
 
-    try transport_channel.receive();
+    var topic_registry = registry.TopicRegistry.init(allocator);
+    defer topic_registry.deinit();
+
+    var transport = try tcp.TcpTransport.init("0.0.0.0", 2049, &topic_registry);
+    try transport.listen(&group);
 }
 
 test {
